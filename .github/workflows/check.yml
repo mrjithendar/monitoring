@@ -1,0 +1,45 @@
+name: Check dashboards
+
+# Every pull request and every push to main: the static checks (scripts/check_dashboards.py), formatting, the MOKS
+# build, and the tests. k8s-deployments is checked out beside this repository (public, read-only) for the tests that
+# check what the dashboards need from it: Prometheus keeps every series they read, and Grafana's sidecar loads what the
+# deploy writes (tests/test_k8s_deployments.py). Queries against the live cluster: scripts/audit_live.py, by hand.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: monitoring
+          persist-credentials: false
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: mrjithendar/k8s-deployments
+          ref: master
+          path: k8s-deployments
+          persist-credentials: false
+          sparse-checkout: deploy/minikube
+
+      - name: Static checks
+        working-directory: monitoring
+        run: |
+          python3 scripts/check_dashboards.py
+          python3 scripts/format_dashboards.py --check
+          python3 generators/moks/build.py --check
+
+      - name: Tests
+        working-directory: monitoring
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet --disable-pip-version-check pytest==8.4.1 PyYAML==6.0.2
+          "$RUNNER_TEMP/venv/bin/python" -m pytest -q -rs tests
