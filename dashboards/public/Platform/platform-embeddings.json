@@ -1,0 +1,1149 @@
+{
+  "uid": "platform-embeddings",
+  "title": "Platform · Embeddings (bge-m3)",
+  "description": "bge-m3 text embeddings served by Ollama in namespace embeddings, for seo-agent and moks. Ollama has no /metrics: traffic comes from the callers' Istio sidecars, resources from cAdvisor.",
+  "tags": [
+    "platform",
+    "embeddings",
+    "bge-m3",
+    "ollama",
+    "prometheus"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "editable": false,
+  "graphTooltip": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "links": [
+    {
+      "title": "Live infrastructure",
+      "type": "link",
+      "url": "/grafana/d/live-infrastructure",
+      "icon": "dashboard",
+      "tooltip": "All public dashboards",
+      "asDropdown": false,
+      "includeVars": false,
+      "keepTime": false,
+      "targetBlank": false,
+      "tags": []
+    },
+    {
+      "title": "Platform dashboards",
+      "type": "dashboards",
+      "tags": [
+        "platform"
+      ],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "targetBlank": false,
+      "icon": "external link",
+      "tooltip": "",
+      "url": ""
+    },
+    {
+      "title": "jithendar.com",
+      "type": "link",
+      "url": "https://jithendar.com/",
+      "icon": "external link",
+      "tooltip": "Articles about how this is built",
+      "asDropdown": false,
+      "includeVars": false,
+      "keepTime": false,
+      "targetBlank": true,
+      "tags": []
+    }
+  ],
+  "templating": {
+    "list": []
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Overview",
+      "collapsed": false,
+      "id": 2,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Model in memory",
+      "description": "bge-m3's 1.16 GB of weights stay loaded (OLLAMA_KEEP_ALIVE -1) and show as resident memory: about 1.25 GiB when loaded, well under 1 GiB while the pod starts or after Ollama dropped the model. No series: the ollama container is not running.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "id": 3,
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "(max(container_memory_rss{job=\"kubernetes-cadvisor\", namespace=\"embeddings\", pod=~\"bge-m3-.*\", container=\"ollama\"}) > bool 1073741824) or vector(0)",
+          "legendFormat": "",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "No",
+                  "index": 0
+                },
+                "1": {
+                  "text": "Loaded",
+                  "index": 1
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Uptime",
+      "description": "Since the ollama container last started (a restart or a new pod).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "id": 4,
+      "gridPos": {
+        "x": 4,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "time() - max(container_start_time_seconds{job=\"kubernetes-cadvisor\", namespace=\"embeddings\", pod=~\"bge-m3-.*\", container=\"ollama\"})",
+          "legendFormat": "",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "Not running"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Requests",
+      "description": "Embedding requests in the selected range: what bge-m3's own sidecar answered, plus requests that never reached it (caller-side flags UH, UF, UO, NR). A caller's first request counts too: a counter that appears inside the range already at N adds N, where increase() alone reads 0. kubectl port-forward bypasses the mesh and is not counted. moks sends 32 texts per request, so this counts batches, not texts.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "id": 5,
+      "gridPos": {
+        "x": 8,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum((increase(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\"}[$__range]) + (min_over_time(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\"}[$__range]) unless istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\"} offset $__range) or increase(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\"}[$__range])) or (increase(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\", response_flags=~\".*(UH|UF|UO|NR).*\"}[$__range]) + (min_over_time(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\", response_flags=~\".*(UH|UF|UO|NR).*\"}[$__range]) unless istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\", response_flags=~\".*(UH|UF|UO|NR).*\"} offset $__range) or increase(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\", response_flags=~\".*(UH|UF|UO|NR).*\"}[$__range]))) or vector(0)",
+          "legendFormat": "",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Failed",
+      "description": "Share of requests in the selected range that did not answer 2xx: refused (403: caller missing from values.yaml callers), model missing (404), cancelled by a caller timeout (0, flags DC), or never delivered (503 UH: no ready pod; UF, UO, NR), which only the caller's sidecar sees.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "id": 6,
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "(sum((increase(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\", response_code!~\"2..\"}[$__range]) + (min_over_time(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\", response_code!~\"2..\"}[$__range]) unless istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\", response_code!~\"2..\"} offset $__range) or increase(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\", response_code!~\"2..\"}[$__range])) or (increase(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\", response_flags=~\".*(UH|UF|UO|NR).*\"}[$__range]) + (min_over_time(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\", response_flags=~\".*(UH|UF|UO|NR).*\"}[$__range]) unless istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\", response_flags=~\".*(UH|UF|UO|NR).*\"} offset $__range) or increase(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\", response_flags=~\".*(UH|UF|UO|NR).*\"}[$__range]))) or vector(0)) / sum((increase(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\"}[$__range]) + (min_over_time(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\"}[$__range]) unless istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\"} offset $__range) or increase(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\"}[$__range])) or (increase(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\", response_flags=~\".*(UH|UF|UO|NR).*\"}[$__range]) + (min_over_time(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\", response_flags=~\".*(UH|UF|UO|NR).*\"}[$__range]) unless istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\", response_flags=~\".*(UH|UF|UO|NR).*\"} offset $__range) or increase(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\", response_flags=~\".*(UH|UF|UO|NR).*\"}[$__range])))",
+          "legendFormat": "",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.01
+              },
+              {
+                "color": "red",
+                "value": 0.05
+              }
+            ]
+          },
+          "noValue": "No requests"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "p95 latency",
+      "description": "95th percentile of request time at bge-m3's sidecar in the selected range, first requests of a caller included. A batch of 32 chunks of about 325 tokens takes about 45 s on mk4; a single query about 0.65 s.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "id": 7,
+      "gridPos": {
+        "x": 16,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) ((increase(istio_request_duration_milliseconds_bucket{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\"}[$__range]) + (min_over_time(istio_request_duration_milliseconds_bucket{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\"}[$__range]) unless istio_request_duration_milliseconds_bucket{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\"} offset $__range) or increase(istio_request_duration_milliseconds_bucket{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\"}[$__range]))))",
+          "legendFormat": "",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "No requests"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Memory of limit",
+      "description": "Working set of the ollama container over its memory limit (2.5 GiB in values.yaml). The kernel OOM-kills it at 100%; alert BgeM3MemoryNearLimit fires at 90%.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "id": 8,
+      "gridPos": {
+        "x": 20,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "max(container_memory_working_set_bytes{job=\"kubernetes-cadvisor\", namespace=\"embeddings\", pod=~\"bge-m3-.*\", container=\"ollama\"}) / max(container_spec_memory_limit_bytes{job=\"kubernetes-cadvisor\", namespace=\"embeddings\", pod=~\"bge-m3-.*\", container=\"ollama\"} > 0)",
+          "legendFormat": "",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.8
+              },
+              {
+                "color": "red",
+                "value": 0.9
+              }
+            ]
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "type": "row",
+      "title": "Traffic by caller",
+      "collapsed": false,
+      "id": 9,
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Requests/s by caller",
+      "description": "Every request to http://bge-m3.embeddings:11434 that reached the pod, reported by bge-m3's own sidecar, so it survives caller restarts. A rate needs two samples: a caller's very first request shows in the Requests stat, not here.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "id": 10,
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum by (source_workload_namespace, source_workload) (rate(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\"}[$__rate_interval]))",
+          "legendFormat": "{{source_workload_namespace}}/{{source_workload}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Responses by code",
+      "description": "Response code and Envoy flags at bge-m3's sidecar (DC: the caller hung up; code 0 means no response was sent), plus, marked \"not delivered\", requests the caller's sidecar could not get to the pod (UH: no healthy pod, UF: connection failed, UO: overflow, NR: no route).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "id": 11,
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum by (response_code, response_flags) (rate(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\"}[$__rate_interval]))",
+          "legendFormat": "{{response_code}} {{response_flags}}"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum by (response_code, response_flags) (rate(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\", response_flags=~\".*(UH|UF|UO|NR).*\"}[$__rate_interval]))",
+          "legendFormat": "not delivered {{response_code}} {{response_flags}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency by caller",
+      "description": "Median and 95th percentile per caller. Requests are batches, so latency grows with the number and length of texts; the server computes one batch at a time (Ollama runs embeddings with -np 1).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "id": 12,
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "histogram_quantile(0.5, sum by (le, source_workload) (rate(istio_request_duration_milliseconds_bucket{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\"}[$__rate_interval])))",
+          "legendFormat": "p50 {{source_workload}}"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, source_workload) (rate(istio_request_duration_milliseconds_bucket{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\"}[$__rate_interval])))",
+          "legendFormat": "p95 {{source_workload}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Vectors/s by caller (estimate)",
+      "description": "Response bytes divided by 12.8 KB, the measured size of one 1024-dimension vector in Ollama's JSON (both /api/embed and /v1/embeddings). Ollama exports no metrics of its own, so this is the closest count of texts embedded; error bodies add a negligible amount.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "id": 13,
+      "gridPos": {
+        "x": 12,
+        "y": 14,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum by (source_workload_namespace, source_workload) (rate(istio_response_bytes_sum{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"embeddings\", destination_service_name=\"bge-m3\"}[$__rate_interval])) / 12800",
+          "legendFormat": "{{source_workload_namespace}}/{{source_workload}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "row",
+      "title": "Resources",
+      "collapsed": false,
+      "id": 14,
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU",
+      "description": "Cores used. No CPU limit (values.yaml): Ollama sizes its threads to the node's 4 vCPU, so a busy batch uses about 3.5 cores and competes with whatever else runs on that node.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "id": 15,
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum by (container) (rate(container_cpu_usage_seconds_total{job=\"kubernetes-cadvisor\", namespace=\"embeddings\", pod=~\"bge-m3-.*\", container=~\"ollama|istio-proxy\"}[$__rate_interval]))",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU waiting",
+      "description": "Share of time the ollama container had work but no CPU (pressure stall information). High while latency rises: the node is contended, not the model slow.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "id": 16,
+      "gridPos": {
+        "x": 8,
+        "y": 23,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "max(rate(container_pressure_cpu_waiting_seconds_total{job=\"kubernetes-cadvisor\", namespace=\"embeddings\", pod=~\"bge-m3-.*\", container=\"ollama\"}[$__rate_interval]))",
+          "legendFormat": "waiting"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory",
+      "description": "Working set and resident memory of the ollama container against its limit. Resident memory holds the weights (about 1.25 GiB) plus compute buffers that grow with batch size and context length.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "id": 17,
+      "gridPos": {
+        "x": 16,
+        "y": 23,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "max(container_memory_working_set_bytes{job=\"kubernetes-cadvisor\", namespace=\"embeddings\", pod=~\"bge-m3-.*\", container=\"ollama\"})",
+          "legendFormat": "working set"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "max(container_memory_rss{job=\"kubernetes-cadvisor\", namespace=\"embeddings\", pod=~\"bge-m3-.*\", container=\"ollama\"})",
+          "legendFormat": "resident"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "max(container_spec_memory_limit_bytes{job=\"kubernetes-cadvisor\", namespace=\"embeddings\", pod=~\"bge-m3-.*\", container=\"ollama\"} > 0)",
+          "legendFormat": "limit"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "limit"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Model volume",
+      "description": "Hetzner volume bge-m3-models (10 Gi, the provider's minimum) holding the downloaded model.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "id": 18,
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "max(kubelet_volume_stats_used_bytes{job=\"kubernetes-kubelet\", namespace=\"embeddings\", persistentvolumeclaim=\"bge-m3-models\"})",
+          "legendFormat": "used"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "max(kubelet_volume_stats_capacity_bytes{job=\"kubernetes-kubelet\", namespace=\"embeddings\", persistentvolumeclaim=\"bge-m3-models\"})",
+          "legendFormat": "capacity"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "capacity"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Network",
+      "description": "Bytes in and out of the pod, sidecar included. Requests carry text; responses about 12.8 KB per vector.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "id": 19,
+      "gridPos": {
+        "x": 12,
+        "y": 31,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum(rate(container_network_receive_bytes_total{job=\"kubernetes-cadvisor\", namespace=\"embeddings\", pod=~\"bge-m3-.*\"}[$__rate_interval]))",
+          "legendFormat": "received"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum(rate(container_network_transmit_bytes_total{job=\"kubernetes-cadvisor\", namespace=\"embeddings\", pod=~\"bge-m3-.*\"}[$__rate_interval]))",
+          "legendFormat": "sent"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    }
+  ],
+  "id": null
+}

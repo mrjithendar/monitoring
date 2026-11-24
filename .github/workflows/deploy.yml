@@ -1,0 +1,104 @@
+name: Deploy dashboards
+
+# Applies every dashboard in dashboards/public and dashboards/private to mk4, one ConfigMap each in namespace
+# grafana-dashboards (scripts/render_configmaps.py), then deletes the ConfigMaps of dashboards removed here. Grafana's
+# dashboard sidecar loads them within a minute, without a restart: public/ into the org "Public" (anyone, behind
+# Cloudflare's human check), private/ into the main org (signed in). k8s-deployments: grafana/values.yaml, grafana.tf.
+#
+# Access, set once by scripts/setup-ci-access.sh:
+#   MK4_API_SERVER, MK4_CA_DATA   repository variables          the cluster API (the values k8s-deployments uses)
+#   MK4_DASHBOARDS_TOKEN          secret of environment mk4     ServiceAccount grafana-dashboards/github-dashboards-deployer,
+#                                                               which may only manage ConfigMaps in that namespace
+# Until they exist the job checks and renders, then stops with a notice instead of failing.
+on:
+  push:
+    branches: [main]
+    paths:
+      - dashboards/**
+      - generators/**
+      - scripts/**
+      - .github/workflows/deploy.yml
+      - .github/mk4-dashboards-kubeconfig.yaml
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-dashboards
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  NAMESPACE: grafana-dashboards
+  SELECTOR: app.kubernetes.io/managed-by=mrjithendar-monitoring
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04-arm
+    environment: mk4
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check
+        run: |
+          python3 scripts/check_dashboards.py
+          python3 scripts/format_dashboards.py --check
+          python3 generators/moks/build.py --check
+
+      - name: Render
+        run: |
+          set -euo pipefail
+          python3 scripts/render_configmaps.py > "$RUNNER_TEMP/dashboards.json"
+          python3 scripts/render_configmaps.py --names | sort > "$RUNNER_TEMP/wanted"
+          [[ -s "$RUNNER_TEMP/wanted" ]] || { echo "::error::No dashboards rendered; refusing to deploy (the prune would delete every one)"; exit 1; }
+          echo "$(wc -l < "$RUNNER_TEMP/wanted") dashboards rendered"
+
+      - name: Kubeconfig for mk4
+        id: access
+        env:
+          MK4_API_SERVER: ${{ vars.MK4_API_SERVER }}
+          MK4_CA_DATA: ${{ vars.MK4_CA_DATA }}
+          MK4_DASHBOARDS_TOKEN: ${{ secrets.MK4_DASHBOARDS_TOKEN }}
+        run: |
+          set -euo pipefail
+          missing=()
+          for v in MK4_API_SERVER MK4_CA_DATA MK4_DASHBOARDS_TOKEN; do [[ -n "${!v}" ]] || missing+=("$v"); done
+          if (( ${#missing[@]} )); then
+            echo "::notice::Not deployed: ${missing[*]} not set. Run scripts/setup-ci-access.sh once (README.md, Deploying), then re-run this workflow."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          (umask 077; perl -pe 's/\$\{(MK4_[A-Z_]+)\}/$ENV{$1}/g' .github/mk4-dashboards-kubeconfig.yaml > "$RUNNER_TEMP/kubeconfig")
+          echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
+          KUBECONFIG="$RUNNER_TEMP/kubeconfig" kubectl --request-timeout=20s -n "$NAMESPACE" get configmaps -l "$SELECTOR" -o name >/dev/null \
+            || { echo "::error::mk4 API $MK4_API_SERVER unreachable, or the token cannot list ConfigMaps in $NAMESPACE: re-run scripts/setup-ci-access.sh"; exit 1; }
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Apply
+        if: steps.access.outputs.ready == 'true'
+        run: |
+          set -euo pipefail
+          # Server-side: no last-applied annotation, which would store each dashboard a second time.
+          kubectl --request-timeout=60s apply --server-side --field-manager=mrjithendar-monitoring --force-conflicts \
+            -f "$RUNNER_TEMP/dashboards.json"
+
+      - name: Delete removed dashboards
+        if: steps.access.outputs.ready == 'true'
+        run: |
+          set -euo pipefail
+          kubectl -n "$NAMESPACE" get configmaps -l "$SELECTOR" -o name | sed 's|^configmap/||' | sort > "$RUNNER_TEMP/live"
+          comm -13 "$RUNNER_TEMP/wanted" "$RUNNER_TEMP/live" > "$RUNNER_TEMP/removed"
+          while read -r name; do
+            [[ -n "$name" ]] && kubectl -n "$NAMESPACE" delete configmap "$name"
+          done < "$RUNNER_TEMP/removed"
+          {
+            echo "### Dashboards on mk4"
+            echo "$(wc -l < "$RUNNER_TEMP/wanted") applied, $(grep -c . "$RUNNER_TEMP/removed" || true) removed. Grafana loads changes within a minute."
+            echo '```'
+            kubectl -n "$NAMESPACE" get configmaps -l "$SELECTOR" \
+              -o custom-columns='NAME:.metadata.name,FOLDER:.metadata.annotations.grafana_folder' --sort-by=.metadata.name
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
