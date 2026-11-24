@@ -60,6 +60,10 @@ def test_every_arc_metric_read_survives_the_scrape_filter(board):
     assert "listenerMetrics" not in yaml.safe_load((K8S / "deploy/minikube/runners/values.yaml").read_text())
 
 
+def test_the_embeddings_readme_documents_the_vector_size_the_dashboard_divides_by():
+    assert "12.8 KB" in (K8S / "deploy/minikube/embeddings/bge-m3/README.md").read_text()
+
+
 def test_the_control_plane_dashboard_expects_istiod_s_replicas(board):
     replicas = yaml.safe_load((K8S / "deploy/minikube/istio/istiod.yaml").read_text())["pilot"]["replicaCount"]
     up = next(p for p in board("platform-istio-control-plane")["panels"] if p["title"] == "istiod replicas up")

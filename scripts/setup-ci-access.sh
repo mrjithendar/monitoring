@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # One-time: gives .github/workflows/deploy.yml access to mk4, limited to the dashboard ConfigMaps.
-#   1. reads the token of ServiceAccount grafana-dashboards/github-dashboards-deployer (k8s-deployments creates it:
-#      minikube-infrastructure/grafana.tf; apply that first);
+#   1. creates the token Secret of ServiceAccount grafana-dashboards/github-dashboards-deployer (k8s-deployments
+#      creates the ServiceAccount and its Role: minikube-infrastructure/grafana.tf; apply that first). The Secret is
+#      not Terraform's, so the token never sits in Terraform state;
 #   2. checks the token can manage ConfigMaps in grafana-dashboards and nothing else that matters (no Secrets, no other
 #      namespace);
 #   3. creates the GitHub environment "mk4" (deployable from main only) and stores:
@@ -12,9 +13,11 @@
 #   scripts/setup-ci-access.sh                      # current kubectl context
 #   KUBE_CONTEXT=<context> scripts/setup-ci-access.sh
 #   SKIP_GH=1 scripts/setup-ci-access.sh            # only check the token; set the GitHub values yourself
+#   ROTATE=1 scripts/setup-ci-access.sh             # replace the token (the old one stops working)
 #
 # The token goes straight into `gh secret set` (stdin) and is never printed. Needs kubectl that can read the Secret in
 # grafana-dashboards, and gh signed in with admin on the repository (unless SKIP_GH=1).
+# Revoke at any time: kubectl -n grafana-dashboards delete secret github-dashboards-deployer-token
 set -euo pipefail
 
 REPO="${GITHUB_REPO:-mrjithendar/monitoring}"
@@ -38,9 +41,30 @@ if [[ -t 0 ]]; then
   [[ "$answer" == [yY] ]] || exit 1
 fi
 
-echo "→ Reading the token of $NS/$SA"
-MK4_DASHBOARDS_TOKEN="$(k -n "$NS" get secret "$SA-token" -o jsonpath='{.data.token}' 2>/dev/null | base64 -d || true)"
-[[ -n "$MK4_DASHBOARDS_TOKEN" ]] || { echo "No token in $NS/$SA-token: apply k8s-deployments (grafana.tf) first." >&2; exit 1; }
+k -n "$NS" get serviceaccount "$SA" >/dev/null 2>&1 || { echo "No ServiceAccount $NS/$SA: apply k8s-deployments (grafana.tf) first." >&2; exit 1; }
+if [[ "${ROTATE:-0}" == "1" ]]; then
+  echo "→ Deleting the old token"
+  k -n "$NS" delete secret "$SA-token" --ignore-not-found
+fi
+echo "→ Token Secret $NS/$SA-token"
+k apply -f - <<YAML
+apiVersion: v1
+kind: Secret
+metadata:
+  name: $SA-token
+  namespace: $NS
+  labels: {app.kubernetes.io/part-of: monitoring}
+  annotations:
+    kubernetes.io/service-account.name: $SA
+type: kubernetes.io/service-account-token
+YAML
+MK4_DASHBOARDS_TOKEN=""
+for _ in $(seq 1 20); do
+  MK4_DASHBOARDS_TOKEN="$(k -n "$NS" get secret "$SA-token" -o jsonpath='{.data.token}' 2>/dev/null | base64 -d || true)"
+  [[ -n "$MK4_DASHBOARDS_TOKEN" ]] && break
+  sleep 1
+done
+[[ -n "$MK4_DASHBOARDS_TOKEN" ]] || { echo "The token was not issued for $NS/$SA-token." >&2; exit 1; }
 export MK4_API_SERVER MK4_CA_DATA MK4_DASHBOARDS_TOKEN
 
 echo "→ Checking what the token may do, through the kubeconfig the workflow builds"

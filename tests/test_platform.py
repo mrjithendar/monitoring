@@ -80,6 +80,12 @@ def test_embeddings_stats_count_a_callers_first_request(board):
     assert stats["Failed"].startswith("(sum(") and ") or vector(0)) / sum(" in stats["Failed"]  # no failures is 0 %
 
 
+def test_embeddings_vector_estimate_divides_by_the_documented_size(board):
+    # 12.8 KB per 1024-dimension vector, as k8s-deployments' bge-m3 README says (test_k8s_deployments.py).
+    estimate = next(e for e in exprs(board("platform-embeddings")) if "istio_response_bytes_sum" in e)
+    assert estimate.endswith("/ 12800")
+
+
 def test_embeddings_responses_show_requests_that_never_reached_the_pod(board):
     panel = next(p for p in board("platform-embeddings")["panels"] if p["title"] == "Responses by code")
     undelivered = [t for t in panel["targets"] if UNDELIVERED in t["expr"]]

@@ -89,7 +89,8 @@ One-time setup, after k8s-deployments has created that ServiceAccount:
 scripts/setup-ci-access.sh       # current kubectl context; KUBE_CONTEXT=<name> to choose another
 ```
 
-It checks the token's permissions, creates the GitHub environment `mk4` (deployments from `main` only) and stores
+It creates the ServiceAccount's token Secret (not Terraform's, so the token stays out of Terraform state), checks
+what the token may do, creates the GitHub environment `mk4` (deployments from `main` only) and stores
 `MK4_API_SERVER`, `MK4_CA_DATA` (variables) and `MK4_DASHBOARDS_TOKEN` (environment secret). Until then the workflow
 checks and renders, then stops with a notice.
 
