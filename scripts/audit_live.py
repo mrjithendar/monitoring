@@ -50,7 +50,7 @@ def get(url: str, params: dict[str, str]) -> dict:
             return json.loads(body)
         except ValueError:
             return {"status": "error", "error": f"HTTP {e.code}: {body[:200]}"}
-    except (urllib.error.URLError, TimeoutError) as e:
+    except (urllib.error.URLError, OSError) as e:  # OSError: timeouts, and a port-forward that drops (connection reset)
         return {"status": "error", "error": f"unreachable: {e}"}
 
 

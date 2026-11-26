@@ -19,6 +19,7 @@ def run(*args):
     ["scripts/check_dashboards.py"],
     ["scripts/format_dashboards.py", "--check"],
     ["generators/moks/build.py", "--check"],
+    ["generators/rag/build.py", "--check"],
 ])
 def test_checks_pass(command):
     result = run(*command)
@@ -27,18 +28,27 @@ def test_checks_pass(command):
 
 def test_folders_and_orgs():
     found = {(e.org, e.folder) for e in dashboards.entries()}
-    assert found == {("public", ""), ("public", "MOKS"), ("public", "Platform"), ("private", "Jithendar.com"),
-                     ("inactive", "RoboShop")}
+    assert found == {("public", ""), ("public", "MOKS"), ("public", "Platform"), ("public", "RAG"),
+                     ("private", "Jithendar.com"), ("inactive", "RoboShop")}
     # Jithendar.com's dashboards are private; everything else that runs on mk4 is public.
     assert all(e.org == "private" for e in dashboards.entries() if e.folder == "Jithendar.com")
-    assert all(e.org == "public" for e in dashboards.entries() if e.folder in ("MOKS", "Platform"))
+    assert all(e.org == "public" for e in dashboards.entries() if e.folder in ("MOKS", "Platform", "RAG"))
 
 
-def test_the_landing_page_links_every_platform_dashboard(board):
+def test_folder_tags_are_unique_to_their_folder(boards):
+    # A folder's dropdown lists every dashboard with its tag, wherever it lives. The landing page (no folder) is in
+    # the Platform dropdown on purpose.
+    for e in dashboards.entries():
+        for folder, tag in dashboards.FOLDER_TAGS.items():
+            if e.folder and folder != e.folder:
+                assert tag not in boards[e.path.stem]["tags"], (e.rel, tag)
+
+
+def test_the_landing_page_links_every_platform_and_rag_dashboard(board):
     home = board(dashboards.HOME_UID)
     text = next(p["options"]["content"] for p in home["panels"] if p["type"] == "text")
-    platform = {e.path.stem for e in dashboards.entries() if e.folder == "Platform"}
-    assert platform <= set(re.findall(r"/grafana/d/([\w-]+)", text))
+    linked = {e.path.stem for e in dashboards.entries() if e.folder in ("Platform", "RAG")}
+    assert linked <= set(re.findall(r"/grafana/d/([\w-]+)", text))
     assert "/grafana/d/moks-overview" in text and "https://jithendar.com/" in text
 
 

@@ -4,7 +4,8 @@
     python3 scripts/format_dashboards.py           # rewrite the files
     python3 scripts/format_dashboards.py --check   # exit 1 when a file would change (CI)
 
-The MOKS dashboards are not touched here: generators/moks/build.py writes them, through the same standardize().
+The MOKS and RAG dashboards are not touched here: generators/moks/build.py and generators/rag/build.py write them,
+through the same standardize().
 Standard library only.
 """
 from __future__ import annotations
@@ -13,13 +14,13 @@ import sys
 
 from dashboards import DASHBOARDS, dump, entries, standardize
 
-GENERATED = DASHBOARDS / "public" / "MOKS"
+GENERATED = (DASHBOARDS / "public" / "MOKS", DASHBOARDS / "public" / "RAG")
 
 
 def main(argv: list[str]) -> int:
     check, changed = "--check" in argv, []
     for e in entries():
-        if e.path.is_relative_to(GENERATED):
+        if any(e.path.is_relative_to(g) for g in GENERATED):
             continue
         body = dump(standardize(e.load(), e.org, e.folder))
         if e.path.read_text(encoding="utf-8") != body:

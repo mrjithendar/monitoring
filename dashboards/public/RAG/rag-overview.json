@@ -1,0 +1,1752 @@
+{
+  "uid": "rag-overview",
+  "title": "RAG · Overview",
+  "description": "The shared RAG platform in namespace rag (mrjithendar/moks-rag): what runs, who calls it, what it did and what it uses.",
+  "tags": [
+    "rag-platform",
+    "qdrant",
+    "bge-m3",
+    "litellm",
+    "open-webui"
+  ],
+  "editable": false,
+  "graphTooltip": 1,
+  "timezone": "browser",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "refresh": "1m",
+  "schemaVersion": 41,
+  "fiscalYearStartMonth": 0,
+  "liveNow": false,
+  "timepicker": {},
+  "weekStart": "",
+  "links": [
+    {
+      "title": "Live infrastructure",
+      "type": "link",
+      "url": "/grafana/d/live-infrastructure",
+      "icon": "dashboard",
+      "tooltip": "All public dashboards",
+      "asDropdown": false,
+      "includeVars": false,
+      "keepTime": false,
+      "targetBlank": false,
+      "tags": []
+    },
+    {
+      "title": "RAG dashboards",
+      "type": "dashboards",
+      "tags": [
+        "rag-platform"
+      ],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "targetBlank": false,
+      "icon": "external link",
+      "tooltip": "",
+      "url": ""
+    },
+    {
+      "title": "jithendar.com",
+      "type": "link",
+      "url": "https://jithendar.com/",
+      "icon": "external link",
+      "tooltip": "Articles about how this is built",
+      "asDropdown": false,
+      "includeVars": false,
+      "keepTime": false,
+      "targetBlank": true,
+      "tags": []
+    },
+    {
+      "title": "Embeddings (bge-m3)",
+      "type": "link",
+      "url": "/grafana/d/platform-embeddings",
+      "icon": "dashboard",
+      "tooltip": "bge-m3 in detail",
+      "asDropdown": false,
+      "includeVars": false,
+      "keepTime": true,
+      "targetBlank": false,
+      "tags": []
+    },
+    {
+      "title": "moks-rag on GitHub",
+      "type": "link",
+      "url": "https://github.com/mrjithendar/moks-rag",
+      "icon": "external link",
+      "tooltip": "How the platform is deployed",
+      "asDropdown": false,
+      "includeVars": false,
+      "keepTime": false,
+      "targetBlank": true,
+      "tags": []
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      },
+      {
+        "name": "Containers started",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "roboshop-prometheus"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "purple",
+        "step": "1m",
+        "expr": "label_replace((time() - container_start_time_seconds{job=\"kubernetes-cadvisor\", namespace=\"rag\", container=~\"rag-api|open-webui|qdrant|ollama|docling-serve|litellm\"}) < 120, \"container\", \"bge-m3\", \"container\", \"ollama\")",
+        "titleFormat": "{{container}} started",
+        "textFormat": "{{pod}}: a rollout, a restart or a crash",
+        "useValueForTime": false
+      }
+    ]
+  },
+  "templating": {
+    "list": []
+  },
+  "panels": [
+    {
+      "type": "text",
+      "title": "",
+      "options": {
+        "mode": "markdown",
+        "content": "The shared retrieval platform behind jithendar.com's projects: **rag-api** (`/rag`) and **Open WebUI** (`/chat`) in front of **Qdrant** (vectors), **bge-m3** (embeddings), **docling-serve** (document parsing) and **LiteLLM** (Claude models). None of them exports metrics yet, so traffic comes from the Istio sidecars, resources from cAdvisor and the kubelet, and operations from rag-api's log events. Source: [moks-rag](https://github.com/mrjithendar/moks-rag). One component in detail: [RAG · Components](/grafana/d/rag-components)."
+      },
+      "id": 1,
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "type": "row",
+      "title": "Now",
+      "collapsed": false,
+      "panels": [],
+      "id": 2,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 3
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Components",
+      "description": "Main container of each component, from cAdvisor: Running, or Down when it has not run for 5 minutes. Running is not ready: mk4 has no kube-state-metrics, so readiness is not recorded.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "label_replace(count by (container) (container_memory_working_set_bytes{job=\"kubernetes-cadvisor\", namespace=\"rag\", container=~\"rag-api|open-webui|qdrant|ollama|docling-serve|litellm\"}), \"container\", \"bge-m3\", \"container\", \"ollama\") or label_replace(vector(0), \"container\", \"rag-api\", \"\", \"\") or label_replace(vector(0), \"container\", \"open-webui\", \"\", \"\") or label_replace(vector(0), \"container\", \"qdrant\", \"\", \"\") or label_replace(vector(0), \"container\", \"bge-m3\", \"\", \"\") or label_replace(vector(0), \"container\", \"docling-serve\", \"\", \"\") or label_replace(vector(0), \"container\", \"litellm\", \"\", \"\")",
+          "legendFormat": "{{container}}",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Down",
+                  "color": "red",
+                  "index": 0
+                }
+              }
+            },
+            {
+              "type": "range",
+              "options": {
+                "from": 1,
+                "to": 1000,
+                "result": {
+                  "text": "Running",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "wideLayout": true
+      },
+      "id": 3,
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "API requests",
+      "description": "Requests to rag-api in the time range, from any caller: the gateway (jithendar.com/rag), Open WebUI and services in other namespaces. Kubernetes' probes do not pass the sidecar and are not counted.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum((increase(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=\"rag-api\"}[$__range]) + (min_over_time(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=\"rag-api\"}[$__range]) unless istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=\"rag-api\"} offset $__range) or increase(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=\"rag-api\"}[$__range])) or (increase(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"rag\", response_flags=~\".*(UH|UF|UO|NR).*\", destination_service_name=\"rag-api\"}[$__range]) + (min_over_time(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"rag\", response_flags=~\".*(UH|UF|UO|NR).*\", destination_service_name=\"rag-api\"}[$__range]) unless istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"rag\", response_flags=~\".*(UH|UF|UO|NR).*\", destination_service_name=\"rag-api\"} offset $__range) or increase(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"rag\", response_flags=~\".*(UH|UF|UO|NR).*\", destination_service_name=\"rag-api\"}[$__range]))) or vector(0)",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "orientation": "auto",
+        "wideLayout": true
+      },
+      "id": 4,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 7
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Chat UI requests",
+      "description": "Requests to Open WebUI (jithendar.com/chat) in the time range: pages, assets, its API and WebSocket upgrades. One chat is many requests; Chat answers below counts the answers.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum((increase(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=\"open-webui\"}[$__range]) + (min_over_time(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=\"open-webui\"}[$__range]) unless istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=\"open-webui\"} offset $__range) or increase(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=\"open-webui\"}[$__range])) or (increase(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"rag\", response_flags=~\".*(UH|UF|UO|NR).*\", destination_service_name=\"open-webui\"}[$__range]) + (min_over_time(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"rag\", response_flags=~\".*(UH|UF|UO|NR).*\", destination_service_name=\"open-webui\"}[$__range]) unless istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"rag\", response_flags=~\".*(UH|UF|UO|NR).*\", destination_service_name=\"open-webui\"} offset $__range) or increase(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"rag\", response_flags=~\".*(UH|UF|UO|NR).*\", destination_service_name=\"open-webui\"}[$__range]))) or vector(0)",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "orientation": "auto",
+        "wideLayout": true
+      },
+      "id": 5,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 7
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Server errors",
+      "description": "Share of requests to any component in the time range that got a 5xx or never reached a pod (caller-side flags UH, UF, UO, NR). 401 and 404 are callers' mistakes and do not count.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "(sum((increase(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=~\"rag-api|open-webui|qdrant|bge-m3|docling-serve|litellm\", response_code=~\"5..\"}[$__range]) + (min_over_time(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=~\"rag-api|open-webui|qdrant|bge-m3|docling-serve|litellm\", response_code=~\"5..\"}[$__range]) unless istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=~\"rag-api|open-webui|qdrant|bge-m3|docling-serve|litellm\", response_code=~\"5..\"} offset $__range) or increase(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=~\"rag-api|open-webui|qdrant|bge-m3|docling-serve|litellm\", response_code=~\"5..\"}[$__range])) or (increase(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"rag\", response_flags=~\".*(UH|UF|UO|NR).*\", destination_service_name=~\"rag-api|open-webui|qdrant|bge-m3|docling-serve|litellm\"}[$__range]) + (min_over_time(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"rag\", response_flags=~\".*(UH|UF|UO|NR).*\", destination_service_name=~\"rag-api|open-webui|qdrant|bge-m3|docling-serve|litellm\"}[$__range]) unless istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"rag\", response_flags=~\".*(UH|UF|UO|NR).*\", destination_service_name=~\"rag-api|open-webui|qdrant|bge-m3|docling-serve|litellm\"} offset $__range) or increase(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"rag\", response_flags=~\".*(UH|UF|UO|NR).*\", destination_service_name=~\"rag-api|open-webui|qdrant|bge-m3|docling-serve|litellm\"}[$__range]))) or vector(0)) / sum((increase(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=~\"rag-api|open-webui|qdrant|bge-m3|docling-serve|litellm\"}[$__range]) + (min_over_time(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=~\"rag-api|open-webui|qdrant|bge-m3|docling-serve|litellm\"}[$__range]) unless istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=~\"rag-api|open-webui|qdrant|bge-m3|docling-serve|litellm\"} offset $__range) or increase(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=~\"rag-api|open-webui|qdrant|bge-m3|docling-serve|litellm\"}[$__range])) or (increase(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"rag\", response_flags=~\".*(UH|UF|UO|NR).*\", destination_service_name=~\"rag-api|open-webui|qdrant|bge-m3|docling-serve|litellm\"}[$__range]) + (min_over_time(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"rag\", response_flags=~\".*(UH|UF|UO|NR).*\", destination_service_name=~\"rag-api|open-webui|qdrant|bge-m3|docling-serve|litellm\"}[$__range]) unless istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"rag\", response_flags=~\".*(UH|UF|UO|NR).*\", destination_service_name=~\"rag-api|open-webui|qdrant|bge-m3|docling-serve|litellm\"} offset $__range) or increase(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"rag\", response_flags=~\".*(UH|UF|UO|NR).*\", destination_service_name=~\"rag-api|open-webui|qdrant|bge-m3|docling-serve|litellm\"}[$__range])))",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.01
+              },
+              {
+                "color": "red",
+                "value": 0.05
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "No requests"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "orientation": "auto",
+        "wideLayout": true
+      },
+      "id": 6,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 7
+      }
+    },
+    {
+      "type": "stat",
+      "title": "API p95",
+      "description": "95th percentile of rag-api's response time in the time range. A chat answer streams: its time runs to the end of the answer.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) ((increase(istio_request_duration_milliseconds_bucket{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=\"rag-api\", response_code!=\"101\"}[$__range]) + (min_over_time(istio_request_duration_milliseconds_bucket{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=\"rag-api\", response_code!=\"101\"}[$__range]) unless istio_request_duration_milliseconds_bucket{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=\"rag-api\", response_code!=\"101\"} offset $__range) or increase(istio_request_duration_milliseconds_bucket{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", destination_service_name=\"rag-api\", response_code!=\"101\"}[$__range]))))",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "No requests"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "orientation": "auto",
+        "wideLayout": true
+      },
+      "id": 7,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 7
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Vector storage",
+      "description": "Used space on Qdrant's 15 GiB Hetzner volume (collections sre_knowledge, cms_content, seo_intel). Points per collection need Qdrant's own /metrics, which Prometheus does not scrape yet.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "max(kubelet_volume_stats_used_bytes{job=\"kubernetes-kubelet\", namespace=\"rag\", persistentvolumeclaim=~\"qdrant-storage-.*\"})",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "No volume"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "orientation": "auto",
+        "wideLayout": true
+      },
+      "id": 8,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 7
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Since last start",
+      "description": "Time since the most recently started main container started: a rollout, a restart or a crash. The purple marks on the graphs say which one.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "time() - max(container_start_time_seconds{job=\"kubernetes-cadvisor\", namespace=\"rag\", container=~\"rag-api|open-webui|qdrant|ollama|docling-serve|litellm\"})",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dtdurations",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "Not running"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "orientation": "auto",
+        "wideLayout": true
+      },
+      "id": 9,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 7
+      }
+    },
+    {
+      "type": "row",
+      "title": "Use",
+      "collapsed": false,
+      "panels": [],
+      "id": 10,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 11
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Ingests",
+      "description": "rag-api `rag_ingest` log events in the time range.",
+      "datasource": {
+        "type": "loki",
+        "uid": "roboshop-loki"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "roboshop-loki"
+          },
+          "expr": "sum(count_over_time({namespace=\"rag\", container=\"rag-api\"} | logfmt | event=\"rag_ingest\" [$__range])) or vector(0)",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "orientation": "auto",
+        "wideLayout": true
+      },
+      "id": 11,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 12
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Queries",
+      "description": "rag-api `rag_query` log events in the time range.",
+      "datasource": {
+        "type": "loki",
+        "uid": "roboshop-loki"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "roboshop-loki"
+          },
+          "expr": "sum(count_over_time({namespace=\"rag\", container=\"rag-api\"} | logfmt | event=\"rag_query\" [$__range])) or vector(0)",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "orientation": "auto",
+        "wideLayout": true
+      },
+      "id": 12,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 12
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Chat answers",
+      "description": "rag-api `openai_chat_completions` log events in the time range.",
+      "datasource": {
+        "type": "loki",
+        "uid": "roboshop-loki"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "roboshop-loki"
+          },
+          "expr": "sum(count_over_time({namespace=\"rag\", container=\"rag-api\"} | logfmt | event=\"openai_chat_completions\" [$__range])) or vector(0)",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "orientation": "auto",
+        "wideLayout": true
+      },
+      "id": 13,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 12
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Deletes",
+      "description": "rag-api `rag_delete_document` log events in the time range.",
+      "datasource": {
+        "type": "loki",
+        "uid": "roboshop-loki"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "roboshop-loki"
+          },
+          "expr": "sum(count_over_time({namespace=\"rag\", container=\"rag-api\"} | logfmt | event=\"rag_delete_document\" [$__range])) or vector(0)",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "orientation": "auto",
+        "wideLayout": true
+      },
+      "id": 14,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 12
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Operations",
+      "description": "rag-api's operations per bar, from its log events: ingests, queries, chat answers (each one a retrieval and a Claude call), deletes, and openai_list_models, Open WebUI asking which models exist.",
+      "datasource": {
+        "type": "loki",
+        "uid": "roboshop-loki"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "roboshop-loki"
+          },
+          "expr": "sum by (event) (count_over_time({namespace=\"rag\", container=\"rag-api\"} | logfmt | event!~\"http_request|application_log\" [$__interval]))",
+          "legendFormat": "{{event}}",
+          "refId": "A",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 70,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 4,
+            "spanNulls": false,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "axisSoftMin": 0,
+            "barAlignment": 0
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "interval": "15m",
+      "id": 15,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Requests/s from outside rag",
+      "description": "Who calls the platform: the gateway for jithendar.com/rag and /chat, and services in other namespaces once they connect (moks-sre, moks-cms, seo-agent). Counted by the receiving sidecar.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum by (source_workload_namespace, source_workload, destination_service_name) (rate(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", source_workload_namespace!=\"rag\"}[$__rate_interval]))",
+          "legendFormat": "{{source_workload_namespace}}/{{source_workload}} → {{destination_service_name}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 4,
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisSoftMin": 0,
+            "barAlignment": 0
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 16,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      }
+    },
+    {
+      "type": "row",
+      "title": "Inside rag",
+      "collapsed": false,
+      "panels": [],
+      "id": 17,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Calls between components",
+      "description": "Open WebUI → rag-api for chats; rag-api → bge-m3 (embed), Qdrant (search and store), docling-serve (parse files) and LiteLLM (answer). rag-api → Qdrant never drops to zero: rag-api's readiness probe checks Qdrant every 10 s.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum by (source_workload, destination_service_name) (rate(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", source_workload_namespace=\"rag\"}[$__rate_interval]))",
+          "legendFormat": "{{source_workload}} → {{destination_service_name}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 4,
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisSoftMin": 0,
+            "barAlignment": 0
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 18,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 25
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency p95 by hop",
+      "description": "95th percentile per caller and component, at the receiving sidecar. WebSocket upgrades (101) are left out: they last as long as the connection.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, source_workload, destination_service_name) (rate(istio_request_duration_milliseconds_bucket{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\", response_code!=\"101\"}[$__rate_interval])))",
+          "legendFormat": "{{source_workload}} → {{destination_service_name}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 4,
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisSoftMin": 0,
+            "barAlignment": 0
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 19,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 25
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Responses by code",
+      "description": "Response codes per component, plus requests a caller could not get to a pod (UH: no healthy pod, UF: connection failed, UO: overflow, NR: no route). 302 and 401 at Open WebUI are its sign-in.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum by (destination_service_name, response_code) (rate(istio_requests_total{job=\"envoy-stats\", reporter=\"destination\", destination_service_namespace=\"rag\"}[$__rate_interval]))",
+          "legendFormat": "{{destination_service_name}} {{response_code}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum by (destination_service_name, response_code, response_flags) (rate(istio_requests_total{job=\"envoy-stats\", reporter=\"source\", destination_service_namespace=\"rag\", response_flags=~\".*(UH|UF|UO|NR).*\"}[$__rate_interval]))",
+          "legendFormat": "not delivered: {{destination_service_name}} {{response_code}} {{response_flags}}",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 4,
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisSoftMin": 0,
+            "barAlignment": 0
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 20,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 33
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Traffic to the internet",
+      "description": "Bytes over connections that leave the mesh: LiteLLM to the Claude API, bge-m3 fetching its 1.16 GB model on a new volume, and whatever else a component downloads. TLS, so no requests or codes. Istio calls the response bytes sent, so downloaded is istio_tcp_sent_bytes_total.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum by (source_workload) (rate(istio_tcp_sent_bytes_total{job=\"envoy-stats\", reporter=\"source\", source_workload_namespace=\"rag\", destination_service_name=\"PassthroughCluster\"}[$__rate_interval]))",
+          "legendFormat": "{{source_workload}} downloaded",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum by (source_workload) (rate(istio_tcp_received_bytes_total{job=\"envoy-stats\", reporter=\"source\", source_workload_namespace=\"rag\", destination_service_name=\"PassthroughCluster\"}[$__rate_interval]))",
+          "legendFormat": "{{source_workload}} uploaded",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 4,
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisSoftMin": 0,
+            "barAlignment": 0
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 21,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 33
+      }
+    },
+    {
+      "type": "row",
+      "title": "Resources",
+      "collapsed": false,
+      "panels": [],
+      "id": 22,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 41
+      }
+    },
+    {
+      "type": "bargauge",
+      "title": "Memory of limit",
+      "description": "Working set of each main container over its memory limit. The kernel OOM-kills a container at 100%.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "label_replace(max by (container) (container_memory_working_set_bytes{job=\"kubernetes-cadvisor\", namespace=\"rag\", container=~\"rag-api|open-webui|qdrant|ollama|docling-serve|litellm\"}) / max by (container) (container_spec_memory_limit_bytes{job=\"kubernetes-cadvisor\", namespace=\"rag\", container=~\"rag-api|open-webui|qdrant|ollama|docling-serve|litellm\"} > 0), \"container\", \"bge-m3\", \"container\", \"ollama\")",
+          "legendFormat": "{{container}}",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.8
+              },
+              {
+                "color": "red",
+                "value": 0.9
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "No data",
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "sizing": "auto",
+        "minVizHeight": 10,
+        "maxVizHeight": 300,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "id": 23,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 42
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU by component",
+      "description": "Cores used by each main container. bge-m3 has no CPU limit: Ollama sizes its threads to the node and uses up to about 3.5 of its 4 cores while it embeds.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "label_replace(sum by (container) (rate(container_cpu_usage_seconds_total{job=\"kubernetes-cadvisor\", namespace=\"rag\", container=~\"rag-api|open-webui|qdrant|ollama|docling-serve|litellm\"}[$__rate_interval])), \"container\", \"bge-m3\", \"container\", \"ollama\")",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 4,
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisSoftMin": 0,
+            "barAlignment": 0
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 24,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 42
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory by component",
+      "description": "Working set of each main container. bge-m3 holds its model (about 1.25 GiB) all the time.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "label_replace(max by (container) (container_memory_working_set_bytes{job=\"kubernetes-cadvisor\", namespace=\"rag\", container=~\"rag-api|open-webui|qdrant|ollama|docling-serve|litellm\"}), \"container\", \"bge-m3\", \"container\", \"ollama\")",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 4,
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisSoftMin": 0,
+            "barAlignment": 0
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 25,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 42
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU throttled",
+      "description": "Share of scheduling periods in which a container hit its CPU limit and waited. Slow answers with high throttling need a higher limit, not a faster model. bge-m3 has no limit and no series.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "label_replace(sum by (container) (rate(container_cpu_cfs_throttled_periods_total{job=\"kubernetes-cadvisor\", namespace=\"rag\", container=~\"rag-api|open-webui|qdrant|ollama|docling-serve|litellm\"}[$__rate_interval])) / sum by (container) (rate(container_cpu_cfs_periods_total{job=\"kubernetes-cadvisor\", namespace=\"rag\", container=~\"rag-api|open-webui|qdrant|ollama|docling-serve|litellm\"}[$__rate_interval])), \"container\", \"bge-m3\", \"container\", \"ollama\")",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 4,
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisSoftMin": 0,
+            "barAlignment": 0
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 26,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 50
+      }
+    },
+    {
+      "type": "bargauge",
+      "title": "Volumes",
+      "description": "Used share of each volume: Qdrant's collections (15 GiB) and bge-m3's model (10 GiB). Open WebUI's 2 GiB volume is on local-path storage, which the kubelet does not measure.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "max by (persistentvolumeclaim) (kubelet_volume_stats_used_bytes{job=\"kubernetes-kubelet\", namespace=\"rag\"}) / max by (persistentvolumeclaim) (kubelet_volume_stats_capacity_bytes{job=\"kubernetes-kubelet\", namespace=\"rag\"})",
+          "legendFormat": "{{persistentvolumeclaim}}",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.8
+              },
+              {
+                "color": "red",
+                "value": 0.9
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "No data",
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "sizing": "auto",
+        "minVizHeight": 10,
+        "maxVizHeight": 300,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "id": 27,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 50
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Network by component",
+      "description": "Bytes in and out of each pod, sidecar included. Every pod in the mesh receives about 8 to 15 kB/s even when idle (rag or not), so a component's own traffic is the rise above that.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "roboshop-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum by (component) (label_replace(rate(container_network_receive_bytes_total{job=\"kubernetes-cadvisor\", namespace=\"rag\"}[$__rate_interval]), \"component\", \"$1\", \"pod\", \"(.+?)(?:-[a-z0-9]{8,10}-[a-z0-9]{5}|-[0-9]+)\"))",
+          "legendFormat": "{{component}} received",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "roboshop-prometheus"
+          },
+          "expr": "sum by (component) (label_replace(rate(container_network_transmit_bytes_total{job=\"kubernetes-cadvisor\", namespace=\"rag\"}[$__rate_interval]), \"component\", \"$1\", \"pod\", \"(.+?)(?:-[a-z0-9]{8,10}-[a-z0-9]{5}|-[0-9]+)\"))",
+          "legendFormat": "{{component}} sent",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 4,
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisSoftMin": 0,
+            "barAlignment": 0
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 28,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 50
+      }
+    }
+  ],
+  "id": null
+}

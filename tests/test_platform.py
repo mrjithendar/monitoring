@@ -1,6 +1,6 @@
 """The Platform dashboards: moved with them from k8s-deployments (tests/test_embeddings_monitoring.py,
 test_istio_monitoring.py, test_runners_monitoring.py, test_postgres.py). What they need from Prometheus's scrape
-configuration is checked in test_k8s_deployments.py."""
+configuration is checked in test_k8s_deployments.py. The range-count helpers here are shared with test_rag.py."""
 import re
 
 import pytest
@@ -58,17 +58,18 @@ def counts_new_series(expr, window):
 
 
 def test_embeddings_queries_select_bge_m3_only(board):
+    # bge-m3 runs in namespace rag (mrjithendar/moks-rag) since 2026-11-26; namespace embeddings is gone.
     for expr in exprs(board("platform-embeddings")):
         if "istio_" in expr:
             for _, labels in SELECTOR.findall(expr):
                 assert 'destination_service_name="bge-m3"' in labels, labels
-                assert 'destination_service_namespace="embeddings"' in labels and 'job="envoy-stats"' in labels, labels
+                assert 'destination_service_namespace="rag"' in labels and 'job="envoy-stats"' in labels, labels
                 # bge-m3's own sidecar; the callers' sidecars only for requests that never reached the pod.
                 assert 'reporter="destination"' in labels or ('reporter="source"' in labels and UNDELIVERED in labels), labels
         elif "kubelet_volume_stats" in expr:
-            assert 'persistentvolumeclaim="bge-m3-models"' in expr and 'namespace="embeddings"' in expr, expr
+            assert 'persistentvolumeclaim="bge-m3-models"' in expr and 'namespace="rag"' in expr, expr
         else:
-            assert "container_" in expr and 'namespace="embeddings"' in expr and 'pod=~"bge-m3-.*"' in expr, expr
+            assert "container_" in expr and 'namespace="rag"' in expr and 'pod=~"bge-m3-.*"' in expr, expr
 
 
 def test_embeddings_stats_count_a_callers_first_request(board):
@@ -81,9 +82,9 @@ def test_embeddings_stats_count_a_callers_first_request(board):
 
 
 def test_embeddings_vector_estimate_divides_by_the_documented_size(board):
-    # 12.8 KB per 1024-dimension vector, as k8s-deployments' bge-m3 README says (test_k8s_deployments.py).
-    estimate = next(e for e in exprs(board("platform-embeddings")) if "istio_response_bytes_sum" in e)
-    assert estimate.endswith("/ 12800")
+    # 12.8 KB per 1024-dimension vector in Ollama's JSON, measured when bge-m3 ran from k8s-deployments (its README).
+    panel = next(p for p in board("platform-embeddings")["panels"] if p["title"] == "Vectors/s by caller (estimate)")
+    assert panel["targets"][0]["expr"].endswith("/ 12800") and "12.8 KB" in panel["description"]
 
 
 def test_embeddings_responses_show_requests_that_never_reached_the_pod(board):
