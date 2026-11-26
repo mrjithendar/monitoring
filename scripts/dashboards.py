@@ -22,8 +22,10 @@ ORGS = (*DEPLOYED, "inactive")
 HOME_UID = "live-infrastructure"
 SITE = "https://jithendar.com/"
 
-# Folder → the tag its dashboards carry (the folder's dropdown link lists dashboards by it).
-FOLDER_TAGS = {"Platform": "platform", "MOKS": "moks", "RoboShop": "roboshop", "Jithendar.com": "jithendar"}
+# Folder → the tag its dashboards carry (the folder's dropdown link lists dashboards by it). RAG's is not "rag":
+# MOKS · Knowledge carries that tag for MOKS's own pgvector retrieval, and would show in RAG's dropdown.
+FOLDER_TAGS = {"Platform": "platform", "MOKS": "moks", "RAG": "rag-platform", "RoboShop": "roboshop",
+               "Jithendar.com": "jithendar"}
 
 # uid → type of the data sources each org has (k8s-deployments: grafana/values.yaml and grafana.tf).
 # Public has no Jaeger: only Jithendar.com's dashboards read traces, and they are private.

@@ -47,6 +47,7 @@ jobs:
           python3 scripts/check_dashboards.py
           python3 scripts/format_dashboards.py --check
           python3 generators/moks/build.py --check
+          python3 generators/rag/build.py --check
 
       - name: Render
         run: |

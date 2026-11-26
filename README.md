@@ -13,6 +13,7 @@ Grafana through one workflow.
 | `dashboards/public/live-infrastructure.json` | org **Public**, General: the landing page | anyone |
 | `dashboards/public/Platform/` | org Public, folder Platform: cluster, Istio, PostgreSQL, Valkey, runners, embeddings, observability stack | anyone |
 | `dashboards/public/MOKS/` | org Public, folder MOKS: the MOKS SRE agent (written by `generators/moks/build.py`) | anyone |
+| `dashboards/public/RAG/` | org Public, folder RAG: the shared RAG platform in namespace `rag` ([moks-rag](https://github.com/mrjithendar/moks-rag); written by `generators/rag/build.py`) | anyone |
 | `dashboards/private/Jithendar.com/` | main org, folder Jithendar.com | signed in only |
 | `dashboards/inactive/RoboShop/` | not deployed: RoboShop does not run on mk4 today | nobody |
 
@@ -52,7 +53,8 @@ only the dashboards' queries (Grafana OSS cannot limit that). Loki holds the log
    "Export the dashboard to use in another instance" off, so data sources keep their uids.
 2. Save it as `dashboards/<org>/<Folder>/<uid>.json`. A new folder also needs a tag in `FOLDER_TAGS`
    (`scripts/dashboards.py`).
-3. MOKS: edit `generators/moks/build.py`, never its JSON, then `python3 generators/moks/build.py`.
+3. MOKS and RAG: edit `generators/moks/build.py` or `generators/rag/build.py`, never their JSON, then run the script.
+   A new RAG component goes in `COMPONENTS` there; every panel follows.
 4. Run:
 
    ```bash
@@ -73,6 +75,9 @@ kubectl -n monitoring port-forward deploy/prometheus 19090:9090 &
 kubectl -n monitoring port-forward svc/loki 13100:3100 &
 python3 scripts/audit_live.py               # or: python3 scripts/audit_live.py platform-redis
 ```
+
+Variables take their first value, so `rag-components` is audited for rag-api only; its volume and internet panels
+are empty there by design.
 
 Empty is not always wrong: a panel of failures is empty while nothing fails, and a counter appears only after its
 first event.

@@ -1,9 +1,10 @@
 name: Check dashboards
 
 # Every pull request and every push to main: the static checks (scripts/check_dashboards.py), formatting, the MOKS
-# build, and the tests. k8s-deployments is checked out beside this repository (public, read-only) for the tests that
-# check what the dashboards need from it: Prometheus keeps every series they read, and Grafana's sidecar loads what the
-# deploy writes (tests/test_k8s_deployments.py). Queries against the live cluster: scripts/audit_live.py, by hand.
+# and RAG builds, and the tests. k8s-deployments is checked out beside this repository (public, read-only) for the
+# tests that check what the dashboards need from it: Prometheus keeps every series they read, and Grafana's sidecar
+# loads what the deploy writes (tests/test_k8s_deployments.py). Queries against the live cluster: scripts/audit_live.py,
+# by hand.
 on:
   pull_request:
   push:
@@ -36,6 +37,7 @@ jobs:
           python3 scripts/check_dashboards.py
           python3 scripts/format_dashboards.py --check
           python3 generators/moks/build.py --check
+          python3 generators/rag/build.py --check
 
       - name: Tests
         working-directory: monitoring
