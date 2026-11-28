@@ -661,7 +661,7 @@
         "w": 24,
         "h": 10
       },
-      "description": "Open a line's details: TraceID opens the trace in Grafana (Jaeger data source); TraceID (Jaeger UI) opens Jaeger's own UI and needs kubectl -n observability port-forward svc/jaeger 16686."
+      "description": "Open a line's details: TraceID opens the trace in Grafana (Tempo data source)."
     },
     {
       "type": "logs",
@@ -700,7 +700,7 @@
       "id": 14,
       "type": "logs",
       "title": "Failed or slow requests (5xx or over 2 s)",
-      "description": "Completion lines (event=http_request_completed). Each has trace_id; open the line to follow the Jaeger link.",
+      "description": "Completion lines (event=http_request_completed). Each has trace_id; open the line to follow the trace link.",
       "datasource": {
         "type": "loki",
         "uid": "roboshop-loki"

@@ -28,11 +28,12 @@ FOLDER_TAGS = {"Platform": "platform", "MOKS": "moks", "RAG": "rag-platform", "R
                "Jithendar.com": "jithendar"}
 
 # uid → type of the data sources each org has (k8s-deployments: grafana/values.yaml and grafana.tf).
-# Public has no Jaeger: only Jithendar.com's dashboards read traces, and they are private.
+# Public has no traces: only Jithendar.com's dashboards read them, and they are private. Tempo (uid tempo) replaces
+# Jaeger (uid jaeger) once k8s-deployments' var.tempo is set (minikube-infrastructure/tempo.tf).
 DATASOURCES = {
     "public": {"roboshop-prometheus": "prometheus", "roboshop-loki": "loki"},
-    "private": {"roboshop-prometheus": "prometheus", "roboshop-loki": "loki", "jaeger": "jaeger"},
-    "inactive": {"roboshop-prometheus": "prometheus", "roboshop-loki": "loki", "jaeger": "jaeger"},
+    "private": {"roboshop-prometheus": "prometheus", "roboshop-loki": "loki", "tempo": "tempo"},
+    "inactive": {"roboshop-prometheus": "prometheus", "roboshop-loki": "loki", "tempo": "tempo"},
 }
 # Data source variables the MOKS dashboards use, by the plugin type they select.
 DATASOURCE_VARIABLES = {"${datasource}": "prometheus", "$datasource": "prometheus", "${logs}": "loki", "$logs": "loki"}

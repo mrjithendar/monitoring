@@ -1,7 +1,7 @@
 {
   "uid": "jithendar-com-crewai",
   "title": "Jithendar.com · CrewAI",
-  "description": "CrewAI flows, crews, tasks and tool calls of the SEO agent: metrics (Prometheus), run lines (Loki) and traces (Jaeger). Source: jithendar.com repository, grafana/.",
+  "description": "CrewAI flows, crews, tasks and tool calls of the SEO agent: metrics (Prometheus), run lines (Loki) and traces (Tempo). Source: jithendar.com repository, grafana/.",
   "tags": [
     "jithendar",
     "jithendar-com",
@@ -9,7 +9,7 @@
     "crewai",
     "prometheus",
     "loki",
-    "jaeger"
+    "tempo"
   ],
   "timezone": "browser",
   "editable": false,
@@ -1355,12 +1355,13 @@
                     "url": "/grafana/d/jithendar-com-crewai/jithendar-com-crewai?${__url_time_range}&var-trace_id=${__value.raw}&${flow:queryparam}&${crew:queryparam}"
                   },
                   {
-                    "title": "Open in Explore (Jaeger)",
+                    "title": "Open in Explore (Tempo)",
                     "url": "",
                     "internal": {
-                      "datasourceUid": "jaeger",
-                      "datasourceName": "Jaeger",
+                      "datasourceUid": "tempo",
+                      "datasourceName": "Tempo",
                       "query": {
+                        "queryType": "traceql",
                         "query": "${__value.raw}"
                       }
                     }
@@ -1586,12 +1587,13 @@
                     "url": "/grafana/d/jithendar-com-crewai/jithendar-com-crewai?${__url_time_range}&var-trace_id=${__value.raw}&${flow:queryparam}&${crew:queryparam}"
                   },
                   {
-                    "title": "Open in Explore (Jaeger)",
+                    "title": "Open in Explore (Tempo)",
                     "url": "",
                     "internal": {
-                      "datasourceUid": "jaeger",
-                      "datasourceName": "Jaeger",
+                      "datasourceUid": "tempo",
+                      "datasourceName": "Tempo",
                       "query": {
+                        "queryType": "traceql",
                         "query": "${__value.raw}"
                       }
                     }
@@ -1830,12 +1832,13 @@
                     "url": "/grafana/d/jithendar-com-crewai/jithendar-com-crewai?${__url_time_range}&var-trace_id=${__value.raw}&${flow:queryparam}&${crew:queryparam}"
                   },
                   {
-                    "title": "Open in Explore (Jaeger)",
+                    "title": "Open in Explore (Tempo)",
                     "url": "",
                     "internal": {
-                      "datasourceUid": "jaeger",
-                      "datasourceName": "Jaeger",
+                      "datasourceUid": "tempo",
+                      "datasourceName": "Tempo",
                       "query": {
+                        "queryType": "traceql",
                         "query": "${__value.raw}"
                       }
                     }
@@ -1978,8 +1981,8 @@
       "description": "flow.<flow> is the root; under it the steps, crew.<crew>, crew.<crew>.task.<agent>, crew.<crew>.<agent> (each model call), tool.<tool>, llm.call and seo-agent.callback spans from the web app.",
       "id": 27,
       "datasource": {
-        "type": "jaeger",
-        "uid": "jaeger"
+        "type": "tempo",
+        "uid": "tempo"
       },
       "gridPos": {
         "x": 0,
@@ -1991,10 +1994,11 @@
         {
           "refId": "A",
           "datasource": {
-            "type": "jaeger",
-            "uid": "jaeger"
+            "type": "tempo",
+            "uid": "tempo"
           },
-          "query": "${trace_id}"
+          "query": "${trace_id}",
+          "queryType": "traceql"
         }
       ]
     }
