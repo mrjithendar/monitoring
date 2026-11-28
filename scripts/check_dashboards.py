@@ -5,7 +5,7 @@
 
 Each file: valid JSON; uid = file name, lowercase (it names the ConfigMap and every bookmark); id null; unique uid and
 title; known folder; panels with unique ids on the 24-column grid without overlapping; only the data sources its org
-has (public: Prometheus and Loki; private also Jaeger); every $variable defined; balanced PromQL brackets; links to
+has (public: Prometheus and Loki; private also Tempo); every $variable defined; balanced PromQL brackets; links to
 /grafana/d/<uid> that exist in the same org; small enough for one ConfigMap. Public dashboards also must not read
 jithendar.com's logs (they are private). Queries are not run here: scripts/audit_live.py does that against mk4.
 Standard library only.

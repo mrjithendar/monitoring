@@ -1704,7 +1704,7 @@
     {
       "type": "timeseries",
       "title": "Trace pipeline",
-      "description": "The mk4 OpenTelemetry collector that carries MOKS's (and CrewAI's) spans to Jaeger. Refused spans are lost.",
+      "description": "The mk4 OpenTelemetry collector that carries MOKS's (and CrewAI's) spans to Tempo. Refused spans are lost.",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"

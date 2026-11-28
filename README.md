@@ -41,7 +41,7 @@ dashboard goes too. The Grafana side (sidecar, providers, the namespace and the 
 |---|---|---|---|
 | `roboshop-prometheus` | Prometheus | yes | yes |
 | `roboshop-loki` | Loki | yes | yes |
-| `jaeger` | Jaeger | no | yes |
+| `tempo` | Tempo (traces in R2; replaced `jaeger` once k8s-deployments `tempo` is set) | no | yes |
 
 Anyone who opens the public Grafana can run their own queries against Prometheus and Loki through Grafana's API, not
 only the dashboards' queries (Grafana OSS cannot limit that). Loki holds the logs of every namespace, jithendar.com's

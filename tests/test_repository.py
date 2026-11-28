@@ -66,7 +66,7 @@ def test_every_public_dashboard_links_home_and_the_site(boards):
 def test_no_public_dashboard_reads_traces(boards):
     for e in dashboards.entries():
         if e.org == "public":
-            assert '"uid": "jaeger"' not in json.dumps(boards[e.path.stem]), e.rel  # check_dashboards.py checks types too
+            assert '"uid": "tempo"' not in json.dumps(boards[e.path.stem]), e.rel  # check_dashboards.py checks types too
 
 
 def test_render_one_configmap_per_deployed_dashboard():

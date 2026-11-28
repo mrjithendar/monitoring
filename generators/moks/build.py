@@ -187,7 +187,7 @@ def range_pct(quantile: float, metric: str, by: str = "", sel: str = J) -> str:
 
 
 OK_RED = [("green", None), ("red", 1)]
-LOGS_HELP = "Lines are logfmt after Alloy; a trace_id opens the trace in Jaeger. Full lines (with redacted errors) are in kubectl logs."
+LOGS_HELP = "Lines are logfmt after Alloy; their trace_id finds the trace in Tempo (main org, signed in). Full lines (with redacted errors) are in kubectl logs."
 
 
 def overview() -> dict[str, Any]:
@@ -512,7 +512,7 @@ def platform() -> dict[str, Any]:
         ts("Trace pipeline", [q('sum(rate(otelcol_receiver_accepted_spans{job="otel-collector"}[$__rate_interval]))', "spans in"),
                               q('sum(rate(otelcol_exporter_sent_spans{job="otel-collector"}[$__rate_interval]))', "spans out"),
                               q('sum(rate(otelcol_receiver_refused_spans{job="otel-collector"}[$__rate_interval]))', "refused")],
-           "The mk4 OpenTelemetry collector that carries MOKS's (and CrewAI's) spans to Jaeger. Refused spans are lost.", unit="cps", w=8),
+           "The mk4 OpenTelemetry collector that carries MOKS's (and CrewAI's) spans to Tempo. Refused spans are lost.", unit="cps", w=8),
     ]
     return dashboard("moks-platform", "MOKS · Jobs, connectors and data", "The machinery: job queue, connectors, approvals and actions, database and "
                      "backups, processes.", p, tags=["jobs", "durability"], component=True)

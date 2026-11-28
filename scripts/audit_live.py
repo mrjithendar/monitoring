@@ -78,7 +78,7 @@ def kind_of(ds, panel_ds) -> str | None:
             return "loki"
         return t
     if isinstance(ds, str):
-        return {"roboshop-prometheus": "prometheus", "roboshop-loki": "loki", "jaeger": "jaeger"}.get(ds, ds)
+        return {"roboshop-prometheus": "prometheus", "roboshop-loki": "loki", "tempo": "tempo"}.get(ds, ds)
     return None
 
 

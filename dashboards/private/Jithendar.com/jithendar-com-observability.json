@@ -1,13 +1,13 @@
 {
   "uid": "jithendar-com-observability",
   "title": "Jithendar.com · Observability",
-  "description": "Metrics (Prometheus), logs (Loki) and traces (Jaeger) for jithendar.com on one page. Source: jithendar.com repository, sites/jithendar.com/grafana/.",
+  "description": "Metrics (Prometheus), logs (Loki) and traces (Tempo) for jithendar.com on one page. Source: jithendar.com repository, sites/jithendar.com/grafana/.",
   "tags": [
     "jithendar",
     "jithendar-com",
     "prometheus",
     "loki",
-    "jaeger"
+    "tempo"
   ],
   "timezone": "browser",
   "editable": false,
@@ -497,7 +497,7 @@
     {
       "type": "stat",
       "title": "Spans stored / s",
-      "description": "Spans Jaeger wrote to its store, 5-minute rate (traces from the site and MOKS). Health checks are not traced.",
+      "description": "Spans Tempo received for its store (R2), 5-minute rate (traces from the site and MOKS). Health checks are not traced.",
       "datasource": {
         "type": "prometheus",
         "uid": "roboshop-prometheus"
@@ -509,7 +509,7 @@
             "type": "prometheus",
             "uid": "roboshop-prometheus"
           },
-          "expr": "sum(rate({__name__=~\"otelcol_exporter_sent_spans(_total)?\", job=\"jaeger\"}[5m]))",
+          "expr": "sum(rate(tempo_distributor_spans_received_total{job=\"tempo\"}[5m]))",
           "legendFormat": ""
         }
       ],
@@ -785,7 +785,7 @@
     {
       "type": "table",
       "title": "Requests (newest first): click a trace id",
-      "description": "One completion line per request (Loki, event=http_request_completed), filtered by Route, Status and Min duration. Click a trace id to show its trace and log lines below, or open it in Explore. Jaeger keeps only the newest 5000 traces in memory, so old ids may no longer resolve.",
+      "description": "One completion line per request (Loki, event=http_request_completed), filtered by Route, Status and Min duration. Click a trace id to show its trace and log lines below, or open it in Explore. Tempo keeps traces for its retention (k8s-deployments vars/mk4.tfvars, tempo.retention); older ids no longer resolve.",
       "datasource": {
         "type": "loki",
         "uid": "roboshop-loki"
@@ -819,12 +819,13 @@
                     "url": "/grafana/d/jithendar-com-observability/jithendar-com-observability?${__url_time_range}&var-trace_id=${__value.raw}&${route:queryparam}&${status:queryparam}&${min_ms:queryparam}"
                   },
                   {
-                    "title": "Open in Explore (Jaeger)",
+                    "title": "Open in Explore (Tempo)",
                     "url": "",
                     "internal": {
-                      "datasourceUid": "jaeger",
-                      "datasourceName": "Jaeger",
+                      "datasourceUid": "tempo",
+                      "datasourceName": "Tempo",
                       "query": {
+                        "queryType": "traceql",
                         "query": "${__value.raw}"
                       }
                     }
@@ -993,19 +994,20 @@
     {
       "type": "traces",
       "title": "Trace ${trace_id}",
-      "description": "The selected trace from Jaeger (Trace id variable). Empty until you pick a trace id in the table above or paste one (a visitor's \"Reference\" is its trace id). Span details link to the log lines of the same trace.",
+      "description": "The selected trace from Tempo (Trace id variable). Empty until you pick a trace id in the table above or paste one (a visitor's \"Reference\" is its trace id). Span details link to the log lines of the same trace.",
       "datasource": {
-        "type": "jaeger",
-        "uid": "jaeger"
+        "type": "tempo",
+        "uid": "tempo"
       },
       "targets": [
         {
           "refId": "A",
           "datasource": {
-            "type": "jaeger",
-            "uid": "jaeger"
+            "type": "tempo",
+            "uid": "tempo"
           },
-          "query": "${trace_id}"
+          "query": "${trace_id}",
+          "queryType": "traceql"
         }
       ],
       "options": {},
@@ -1175,7 +1177,7 @@
     {
       "type": "logs",
       "title": "Errors and warnings",
-      "description": "Line details link the trace id to Jaeger in Grafana. Narrow with Contains.",
+      "description": "Line details link the trace id to Tempo in Grafana. Narrow with Contains.",
       "datasource": {
         "type": "loki",
         "uid": "roboshop-loki"
@@ -1222,7 +1224,7 @@
     {
       "type": "timeseries",
       "title": "Spans per second",
-      "description": "Collector: received from the apps, filtered by the privacy rules, sent to Jaeger. Jaeger: stored. Refused or failed spans mean lost traces (alert TraceSpansLost).",
+      "description": "Collector: received from the apps, filtered by the privacy rules, sent to Tempo. Tempo: received for its store. Refused, failed or discarded spans mean lost traces (alerts TraceSpansLost, TempoSpansDiscarded).",
       "datasource": {
         "type": "prometheus",
         "uid": "roboshop-prometheus"
@@ -1252,8 +1254,8 @@
             "type": "prometheus",
             "uid": "roboshop-prometheus"
           },
-          "expr": "sum(rate({__name__=~\"otelcol_exporter_sent_spans(_total)?\", job=\"jaeger\"}[5m]))",
-          "legendFormat": "Jaeger stored"
+          "expr": "sum(rate(tempo_distributor_spans_received_total{job=\"tempo\"}[5m]))",
+          "legendFormat": "Tempo received"
         },
         {
           "refId": "D",
@@ -1261,7 +1263,7 @@
             "type": "prometheus",
             "uid": "roboshop-prometheus"
           },
-          "expr": "sum by (job, reason) (label_replace(rate({__name__=~\"otelcol_receiver_refused_spans(_total)?\", job=~\"otel-collector|jaeger\"}[5m]), \"reason\", \"refused\", \"\", \"\") or label_replace(rate({__name__=~\"otelcol_receiver_failed_spans(_total)?\", job=~\"otel-collector|jaeger\"}[5m]), \"reason\", \"failed\", \"\", \"\") or label_replace(rate({__name__=~\"otelcol_exporter_send_failed_spans(_total)?\", job=~\"otel-collector|jaeger\"}[5m]), \"reason\", \"send_failed\", \"\", \"\")) > 0",
+          "expr": "sum by (job, reason) (label_replace(rate({__name__=~\"otelcol_receiver_refused_spans(_total)?\", job=\"otel-collector\"}[5m]), \"reason\", \"refused\", \"\", \"\") or label_replace(rate({__name__=~\"otelcol_receiver_failed_spans(_total)?\", job=\"otel-collector\"}[5m]), \"reason\", \"failed\", \"\", \"\") or label_replace(rate({__name__=~\"otelcol_exporter_send_failed_spans(_total)?\", job=\"otel-collector\"}[5m]), \"reason\", \"send_failed\", \"\", \"\") or rate(tempo_discarded_spans_total{job=\"tempo\"}[5m])) > 0",
           "legendFormat": "lost ({{job}}, {{reason}})"
         }
       ],
@@ -1396,7 +1398,7 @@
             "type": "prometheus",
             "uid": "roboshop-prometheus"
           },
-          "expr": "sum by (job) (up{job=~\"jithendar-com|otel-collector|jaeger|loki|alloy\"})",
+          "expr": "sum by (job) (up{job=~\"jithendar-com|otel-collector|tempo|loki|alloy\"})",
           "legendFormat": "",
           "instant": true,
           "range": false
@@ -1434,8 +1436,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Jaeger memory",
-      "description": "Jaeger keeps traces in memory (max_traces 5000). Over 90 % of the limit for 15 minutes fires JaegerMemoryNearLimit; an OOM kill loses every stored trace.",
+      "title": "Tempo memory",
+      "description": "Tempo keeps the newest traces in memory and on its volume (WAL) until they are in R2. Over 90 % of the limit for 15 minutes fires TempoMemoryNearLimit; after an OOM kill it replays its volume.",
       "datasource": {
         "type": "prometheus",
         "uid": "roboshop-prometheus"
@@ -1447,7 +1449,7 @@
             "type": "prometheus",
             "uid": "roboshop-prometheus"
           },
-          "expr": "max(container_memory_working_set_bytes{namespace=\"observability\", container=\"jaeger\"})",
+          "expr": "max(container_memory_working_set_bytes{namespace=\"observability\", container=\"tempo\"})",
           "legendFormat": "working set"
         },
         {
@@ -1456,7 +1458,7 @@
             "type": "prometheus",
             "uid": "roboshop-prometheus"
           },
-          "expr": "max(container_spec_memory_limit_bytes{namespace=\"observability\", container=\"jaeger\"} > 0)",
+          "expr": "max(container_spec_memory_limit_bytes{namespace=\"observability\", container=\"tempo\"} > 0)",
           "legendFormat": "limit"
         }
       ],
@@ -1491,7 +1493,7 @@
     {
       "type": "timeseries",
       "title": "Collector export queue",
-      "description": "Spans waiting in the collector for Jaeger. A growing queue means Jaeger is slow or down.",
+      "description": "Spans waiting in the collector for Tempo. A growing queue means Tempo is slow or down.",
       "datasource": {
         "type": "prometheus",
         "uid": "roboshop-prometheus"
