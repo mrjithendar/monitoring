@@ -462,8 +462,8 @@
     },
     {
       "type": "stat",
-      "title": "LLM budget used (month)",
-      "description": "",
+      "title": "LLM spend, 30 days (what LiteLLM charged)",
+      "description": "What LiteLLM charged for the agent's model calls in the last 30 days (x-litellm-response-cost, recorded per call). Budgets are LiteLLM's (moks-cms D-110): see https://jithendar.com/llm/ui or Settings → AI & models → LiteLLM.",
       "id": 7,
       "datasource": {
         "type": "prometheus",
@@ -482,7 +482,7 @@
             "type": "prometheus",
             "uid": "roboshop-prometheus"
           },
-          "expr": "max(seo_llm_budget_used_ratio{job=\"seo-agent\"})",
+          "expr": "sum(increase(seo_llm_cost_usd_total{job=\"seo-agent\"}[30d]))",
           "legendFormat": "",
           "instant": true,
           "range": false
@@ -490,25 +490,17 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit",
+          "unit": "currencyUSD",
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "orange",
-                "value": 0.8
-              },
-              {
-                "color": "red",
-                "value": 1
               }
             ]
           },
-          "decimals": 0
+          "decimals": 2
         },
         "overrides": []
       },

@@ -66,7 +66,7 @@
     {
       "id": 2,
       "type": "stat",
-      "title": "LLM budget used (month, v2+v3)",
+      "title": "LLM spend, 30 days (what LiteLLM charged)",
       "datasource": {
         "type": "prometheus",
         "uid": "roboshop-prometheus"
@@ -84,12 +84,22 @@
             "type": "prometheus",
             "uid": "roboshop-prometheus"
           },
-          "expr": "max(seo_llm_budget_used_ratio{job=\"seo-agent\"})"
+          "expr": "sum(increase(seo_llm_cost_usd_total{job=\"seo-agent\"}[30d]))"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit"
+          "unit": "currencyUSD",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
         },
         "overrides": []
       },
@@ -100,12 +110,13 @@
           ]
         },
         "colorMode": "value"
-      }
+      },
+      "description": "What LiteLLM charged for the agent's model calls in the last 30 days. Budgets are LiteLLM's (moks-cms D-110): https://jithendar.com/llm/ui."
     },
     {
       "id": 3,
       "type": "stat",
-      "title": "Ask the Blog budget used (today)",
+      "title": "Ask the Blog spend (24 h)",
       "datasource": {
         "type": "prometheus",
         "uid": "roboshop-prometheus"
@@ -123,12 +134,22 @@
             "type": "prometheus",
             "uid": "roboshop-prometheus"
           },
-          "expr": "max(seo_ask_budget_used_ratio{job=\"seo-agent\"})"
+          "expr": "sum(increase(seo_llm_cost_usd_total{job=\"seo-agent\",purpose=~\"ask.*\"}[1d]))"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit"
+          "unit": "currencyUSD",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
         },
         "overrides": []
       },
@@ -139,7 +160,8 @@
           ]
         },
         "colorMode": "value"
-      }
+      },
+      "description": "What LiteLLM charged for Ask the Blog in the last 24 hours. Its limit is the budget of its own LiteLLM key (jithendar-ask)."
     },
     {
       "id": 4,
@@ -428,7 +450,7 @@
     {
       "id": 11,
       "type": "timeseries",
-      "title": "Budget refusals",
+      "title": "Runs paused by a LiteLLM budget",
       "datasource": {
         "type": "prometheus",
         "uid": "roboshop-prometheus"
@@ -446,8 +468,8 @@
             "type": "prometheus",
             "uid": "roboshop-prometheus"
           },
-          "expr": "sum by (scope) (increase(seo_llm_budget_blocked_total{job=\"seo-agent\"}[$__interval]))",
-          "legendFormat": "{{scope}}"
+          "expr": "sum by (flow) (increase(seo_flow_runs_total{job=\"seo-agent\",status=\"paused_budget\"}[$__interval]))",
+          "legendFormat": "{{flow}}"
         }
       ],
       "fieldConfig": {
@@ -463,7 +485,8 @@
           }
         },
         "overrides": []
-      }
+      },
+      "description": "Flow runs that ended paused_budget: LiteLLM refused a call (HTTP 422 budget_exceeded) for the team's or a key's budget (moks-cms D-110)."
     },
     {
       "id": 12,
